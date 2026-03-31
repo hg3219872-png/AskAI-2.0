@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/marvin-search-prototype",
+      "destination": "/marvin-search-prototype.html"
+    }
+  ]
+}

@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1440" />
+<title>Marvin – Search Interaction Prototype</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+    background: #f9fbff;
+    width: 1440px;
+    min-height: 936px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ─────────────────── DESIGN TOKENS ─────────────────── */
+  :root {
+    --gray-25: #F4F7FF;
+    --gray-50: #ECF0FB;
+    --gray-100: #DCE1F1;
+    --gray-300: #ADBBE3;
+    --gray-400: #8B95C6;
+    --gray-500: #505C95;
+    --gray-600: #1C275C;
+    --gray-700: #000B29;
+    --white: #FFFFFF;
+    --pink: #E5195D;
+  }
+
+  /* ─────────────────── HEADER ─────────────────── */
+  .header-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1440px; height: 111px;
+    background: linear-gradient(180deg, #e8eeff 0%, #f9fbff 100%);
+    overflow: hidden;
+  }
+  .header-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 200px at 30% -20%, rgba(200,210,255,0.35) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 150px at 80% 120%, rgba(255,200,220,0.2) 0%, transparent 60%);
+  }
+
+  /* ─────────────────── SIDEBAR ─────────────────── */
+  .sidebar {
+    position: absolute;
+    left: 0; top: 0;
+    width: 235px; height: 936px;
+    background: #f9fbff;
+    border-right: 1px solid var(--gray-50);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    height: 111px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+  }
+  .marvin-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7b6ef6 0%, #e5195d 100%);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px; font-weight: 700;
+  }
+  .sidebar-nav {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 510;
+    color: var(--gray-600);
+    transition: background 0.15s ease;
+  }
+  .nav-item:hover { background: var(--gray-25); }
+  .nav-item.active {
+    background: white;
+    border: 1px solid var(--gray-50);
+    box-shadow: 0 2px 10px 0 rgba(0,0,50,0.04);
+  }
+  .nav-icon {
+    width: 20px; height: 20px;
+    background: var(--gray-50);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .sidebar-meeting-card {
+    margin: 16px;
+    background: var(--gray-50);
+    border-radius: 16px;
+    padding: 10px;
+    overflow: hidden;
+  }
+  .meeting-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .meeting-icon {
+    width: 18px; height: 18px;
+    background: linear-gradient(135deg, #b5e4ca, #7b6ef6);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .meeting-title { font-size: 12px; font-weight: 510; color: var(--gray-600); }
+  .meeting-sub { font-size: 11px; color: var(--gray-400); }
+  .meeting-inner {
+    background: white;
+    border: 1px solid var(--gray-50);
+    border-radius: 12px;
+    padding: 10px 12px 8px;
+    box-shadow: 0 4px 10px rgba(0,0,50,0.02);
+  }
+  .meeting-event {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0;
+  }
+  .event-dot {
+    width: 4px; height: 24px; border-radius: 2px; flex-shrink: 0;
+  }
+  .event-name { font-size: 11px; font-weight: 510; color: var(--gray-600); }
+  .event-time { font-size: 10px; color: var(--gray-500); opacity: 0.8; }
+  /* ── Option toggle ── */
+  .option-toggle {
+    display: flex;
+    background: var(--gray-50);
+    border-radius: 20px;
+    padding: 3px;
+    margin: 0 18px 14px;
+    gap: 2px;
+  }
+  .option-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px; font-weight: 510;
+    color: var(--gray-400);
+    padding: 5px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .option-btn.active {
+    background: #ffffff;
+    color: var(--gray-600);
+    box-shadow: 0 1px 4px rgba(0,11,41,0.10);
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 18px;
+    border-top: 1px solid var(--gray-50);
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .user-avatar {
+    width: 33px; height: 33px; border-radius: 50%;
+    background: linear-gradient(135deg, #b5e4ca 0%, #7b6ef6 100%);
+    flex-shrink: 0;
+  }
+  .user-name { font-size: 12px; font-weight: 510; color: var(--gray-600); }
+  .user-role { font-size: 10px; color: var(--gray-400); opacity: 0.8; }
+
+  /* ─────────────────── MAIN CONTENT ─────────────────── */
+  .main {
+    position: absolute;
+    left: 235px; top: 0;
+    width: 1205px; height: 936px;
+  }
+  .top-bar {
+    height: 111px;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 18px;
+    padding-left: 26px;
+    padding-right: 40px;
+    justify-content: space-between;
+  }
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--gray-600);
+    font-weight: 400;
+  }
+
+  /* ─── THE SEARCH PILL (Screen 1) ─── */
+  .search-pill-wrap {
+    position: absolute;
+    left: 50%;
+    top: 52px;
+    transform: translateX(-50%);
+    background: linear-gradient(89.5deg, rgba(255,236,241,0.5) 0%, rgba(235,242,255,0.5) 50%, rgba(242,255,250,0.5) 100%);
+    border-radius: 28px;
+    padding: 4px;
+    z-index: 10;
+  }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border: 0.5px solid rgba(28,39,92,0.15);
+    border-radius: 24px;
+    width: 568px;
+    height: 40px;
+    padding: 4px 10px 4px 12px;
+    cursor: text;
+    box-shadow: 0 4px 12px rgba(0,0,50,0.04);
+    transition: box-shadow 0.2s ease;
+  }
+  .search-pill:hover {
+    box-shadow: 0 4px 20px rgba(0,0,50,0.08);
+  }
+  .search-pill-left {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ai-star-icon {
+    width: 20px; height: 20px;
+    background: linear-gradient(135deg, #ffe0ec, #e0e8ff, #e0fff5);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .search-pill-text {
+    font-size: 14px;
+    color: var(--gray-400);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .clock-icon {
+    width: 20px; height: 20px;
+    opacity: 0.6;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .clock-icon svg { color: var(--gray-500); }
+
+  /* ─── CONTENT PANEL ─── */
+  .content-panel {
+    position: absolute;
+    left: 26px; top: 111px;
+    width: 1165px; height: 756px;
+    background: white;
+    border: 1px solid var(--gray-50);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.02);
+    overflow: hidden;
+  }
+  .panel-subheader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 42px 16px;
+    border-bottom: 1px solid var(--gray-50);
+  }
+  .panel-left-controls {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .show-groups-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 510; color: var(--gray-600);
+    cursor: pointer;
+  }
+  .divider-v {
+    width: 1px; height: 24px; background: var(--gray-50);
+  }
+  .find-project-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: white;
+    border: 1px solid var(--gray-50);
+    border-radius: 32px;
+    padding: 4px 18px 4px 10px;
+    height: 36px;
+    font-size: 12px; color: var(--gray-400);
+    cursor: pointer;
+  }
+  .panel-right-controls {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .owned-toggle {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--gray-50);
+    border-radius: 20px;
+    padding: 4px 10px;
+    height: 36px;
+    font-size: 13px; color: var(--gray-600);
+    cursor: pointer;
+  }
+  .toggle-pill {
+    width: 26px; height: 16px;
+    background: var(--gray-100);
+    border-radius: 8px;
+    position: relative;
+  }
+  .toggle-pill::after {
+    content: ''; position: absolute;
+    left: 2px; top: 2px;
+    width: 12px; height: 12px;
+    background: white; border-radius: 50%;
+  }
+  .sort-btn {
+    width: 36px; height: 36px;
+    background: var(--gray-25);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .new-project-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--gray-600);
+    border-radius: 40px;
+    padding: 4px 12px;
+    height: 36px;
+    font-size: 13px; font-weight: 510; color: white;
+    cursor: pointer;
+  }
+  /* Table rows */
+  .project-count {
+    padding: 12px 42px 8px 68px;
+    font-size: 12px; color: var(--gray-500);
+  }
+  .project-row {
+    display: flex; align-items: center;
+    padding: 0 42px;
+    height: 80px;
+    border-bottom: 1px solid var(--gray-50);
+    gap: 0;
+  }
+  .project-row:hover { background: var(--gray-25); }
+  .row-checkbox {
+    width: 26px; flex-shrink: 0; display: flex; align-items: center;
+  }
+  .cb-box {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1.2px solid var(--gray-300);
+  }
+  .row-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: linear-gradient(135deg, #e0f0ff 0%, #d0e4f8 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+    margin-right: 16px;
+  }
+  .row-info { flex: 1; min-width: 0; }
+  .row-name { font-size: 13px; color: var(--gray-600); margin-bottom: 3px; }
+  .row-meta {
+    font-size: 11px; color: var(--gray-600); opacity: 0.5;
+    display: flex; gap: 4px; align-items: center;
+  }
+  .row-meta .dot { color: var(--gray-400); opacity: 1; }
+  .row-tags {
+    display: flex; gap: 6px; align-items: center;
+    flex-shrink: 0; margin-left: 48px;
+  }
+  .tag-pill {
+    border: 1px solid var(--gray-50);
+    border-radius: 16px;
+    padding: 3px 8px;
+    font-size: 11px; color: var(--gray-500);
+  }
+  .row-actions {
+    display: flex; align-items: center; gap: 8px;
+    margin-left: 24px; flex-shrink: 0;
+  }
+  .pin-btn { width: 20px; height: 20px; opacity: 0.4; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; }
+  .more-btn { width: 24px; height: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; }
+
+  /* ═══════════════════════════════════════════════════════
+     OVERLAY + MODAL  (Screen 2 state)
+  ══════════════════════════════════════════════════════════ */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,11,41,0.0);
+    z-index: 100;
+    pointer-events: none;
+    transition: background 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .overlay.active {
+    background: rgba(0,11,41,0.72);
+    pointer-events: all;
+  }
+
+  /* The expanding modal — all position/size driven by JS */
+  .search-modal {
+    position: fixed;
+    z-index: 200;
+    /* JS will set left/top/width/height directly */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    will-change: left, top, width, height, border-radius, box-shadow, opacity;
+    opacity: 0;
+    pointer-events: none;
+    background: #ffffff;
+    /* transitions are added/removed by JS */
+  }
+  .search-modal.animating {
+    transition:
+      left     0.26s cubic-bezier(0.34, 1.3, 0.64, 1),
+      top      0.26s cubic-bezier(0.34, 1.3, 0.64, 1),
+      width    0.26s cubic-bezier(0.34, 1.3, 0.64, 1),
+      height   0.26s cubic-bezier(0.34, 1.3, 0.64, 1),
+      border-radius 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow    0.22s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity       0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* expo-out on geometry only — opacity stays 1 so the full morph is visible */
+  .search-modal.closing {
+    transition:
+      left          0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      top           0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      width         0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      height        0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      border-radius 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow    0.20s cubic-bezier(0.16, 1, 0.3, 1);
+      /* intentionally no opacity — pill crossfades in at the end via JS */
+  }
+  /* Active = pointer events on + results visible */
+  .search-modal.active {
+    pointer-events: all;
+  }
+
+  /* ── Modal inner input area (the "frame") ── */
+  .modal-input-frame {
+    background: #FFF;
+    border: 1px solid rgba(0, 11, 41, 0.20);
+    border-radius: 12px;
+    box-shadow: 0 2px 16px 0 rgba(0, 0, 50, 0.04);
+    margin: 10px 10px 0;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,50,0.05);
+  }
+
+  /* Input row — just the text, no button here */
+  .modal-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 18px 14px;
+  }
+
+  .modal-ai-icon {
+    width: 14px; height: 14px;
+    background: linear-gradient(135deg, #ffe0ec, #e0e8ff, #e0fff5);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px;
+    flex-shrink: 0;
+  }
+
+  .modal-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: var(--gray-300);
+    font-family: inherit;
+    background: transparent;
+    caret-color: var(--gray-600);
+  }
+  .modal-input::placeholder { color: var(--gray-300); font-size: 15px; }
+  .modal-input:focus { color: var(--gray-600); }
+  .modal-input:focus::placeholder { color: var(--gray-300); }
+
+  /* Toolbar row — chips on left, controls + send button on right */
+  .modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 10px 14px;
+    gap: 8px;
+  }
+
+  .toolbar-left {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .toolbar-chip {
+    display: flex; align-items: center; gap: 6px;
+    border: 1px dashed var(--gray-100);
+    border-radius: 33px;
+    padding: 5px 8px 5px 12px;
+    height: 32px;
+    font-size: 11px; color: var(--gray-600);
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .toolbar-chip:hover { background: var(--gray-25); }
+  .toolbar-chip.filled {
+    background: var(--gray-25);
+    border: 1px solid transparent;
+    font-weight: 510;
+  }
+
+  /* Right cluster: history + mode switcher + send btn all inline */
+  .toolbar-right {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .mode-history-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--gray-50);
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mode-switcher {
+    display: flex; align-items: center; gap: 2px;
+    background: var(--gray-25);
+    border-radius: 100px;
+    padding: 2px;
+  }
+  .mode-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 11px;
+    border-radius: 100px;
+    font-size: 12px; color: var(--gray-600);
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    font-weight: 400;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .mode-btn.selected {
+    background: white;
+    box-shadow: 0 1px 12px rgba(0,0,50,0.06);
+    font-weight: 510;
+    border-color: var(--gray-100);
+  }
+
+  /* Send button — dark navy circle, in toolbar row far right */
+  .modal-send-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--gray-600);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .modal-send-btn:hover { background: #2a3a7c; transform: scale(1.05); }
+
+  .new-badge {
+    background: white;
+    border: 1px solid #ffe5ec;
+    border-radius: 20px;
+    padding: 1px 6px;
+    font-size: 9px; font-weight: 510;
+    color: var(--gray-600);
+  }
+
+  /* ── Modal header — gradient zone, sized only to its content ── */
+  .modal-header {
+    flex-shrink: 0;
+    background: linear-gradient(145deg,
+      rgba(255,236,241,0.65) 0%,
+      rgba(235,242,255,0.70) 50%,
+      rgba(242,255,250,0.60) 100%),
+      #eef1fb;
+    padding-bottom: 12px;
+  }
+
+  /* ── Extra zone between header and results ── */
+  #modalHeaderExtra {
+    flex-shrink: 0;
+    background: #ffffff; /* default: white (zero state — Recent chats) */
+    border-top: 1px solid rgba(0,11,41,0.08);
+  }
+  #modalHeaderExtra:empty {
+    border-top: none;
+  }
+  #modalHeaderExtra.on-gradient {
+    background: linear-gradient(145deg,
+      rgba(255,236,241,0.65) 0%,
+      rgba(235,242,255,0.70) 50%,
+      rgba(242,255,250,0.60) 100%),
+      #eef1fb;
+    border-top: none; /* seamless continuation of header gradient */
+  }
+
+  /* ── Modal results area ── */
+  .modal-results {
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.22s cubic-bezier(0.4,0,0.2,1),
+      transform 0.22s cubic-bezier(0.4,0,0.2,1);
+    background: #ffffff;
+    border-top: 1px solid rgba(0,11,41,0.08);
+  }
+  .modal-results.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* "Search results for X" pinned header row */
+  .search-results-row {
+    border-bottom: 1px solid rgba(0,11,41,0.06);
+    margin-bottom: 8px;
+  }
+  /* Only the file results list scrolls — Ask AI + query rows stay pinned above */
+  .results-scroll {
+    max-height: 285px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .results-scroll::-webkit-scrollbar { display: none; }
+
+  .results-section {
+    padding: 12px 16px 4px;
+  }
+  .section-label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 510; color: var(--gray-500);
+    padding: 2px 6px 6px;
+  }
+  .result-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .result-item:hover { background: var(--gray-25); }
+  .result-item:hover .v2-action-label { color: #1C275C; }
+  /* keyboard-navigation active highlight */
+  .result-item.kbd-active {
+    background: rgba(173, 187, 227, 0.40) !important;
+  }
+  .result-item.kbd-active .v2-action-label { color: #1C275C; }
+  /* enter badge — shown only on kbd-active result rows */
+  .enter-badge {
+    display: none;
+    flex-shrink: 0;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    padding: 2px 8px 4px;
+    font-size: 11px; font-weight: 510; color: var(--gray-500);
+    letter-spacing: 0.02em;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .result-item.kbd-active .enter-badge { display: block; }
+  /* Ask AI label styling (inside section-label) */
+  .ask-ai-dot   { color: var(--gray-300); margin: 0 3px; }
+  .ask-ai-sub   { color: var(--gray-400); font-weight: 400; }
+  /* typed results section label */
+  .section-label.search-label { padding-top: 6px; }
+  /* smooth height transition on the modal itself */
+  .modal-height-anim { transition: height 0.2s cubic-bezier(0.4,0,0.2,1) !important; }
+  .result-icon {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; opacity: 0.65;
+  }
+  .result-text { flex: 1; min-width: 0; }
+  .result-name {
+    font-size: 14px; color: var(--gray-600);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .result-name em { font-style: normal; font-weight: 510; }
+  .result-meta {
+    font-size: 11px; color: var(--gray-400);
+    margin-top: 3px;
+  }
+
+  .results-divider {
+    height: 1px; background: var(--gray-50);
+    margin: 8px 16px 0;
+  }
+
+  .modal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px 14px;
+    border-top: 1px solid rgba(0,11,41,0.08);
+    flex-shrink: 0;
+    cursor: pointer;
+    background: #ffffff;
+  }
+  .footer-link {
+    font-size: 13px; font-weight: 510; color: var(--gray-500);
+  }
+  .footer-link:hover { color: var(--gray-600); }
+  .modal-footer.kbd-active { background: rgba(173, 187, 227, 0.40) !important; }
+  .modal-footer.kbd-active .footer-link { color: var(--gray-600); }
+  .tab-badge {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    padding: 2px 10px 4px;
+    font-size: 11px; font-weight: 510; color: var(--gray-500);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tab-badge:hover {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+
+  /* Close × button — floats fixed above the modal, driven by JS */
+  .modal-close-btn {
+    position: fixed;
+    z-index: 210;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s 0.25s, background 0.15s;
+    backdrop-filter: blur(4px);
+  }
+  .modal-close-btn.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal-close-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* ── Hint text ── */
+  .hint {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(28,39,92,0.85);
+    color: rgba(255,255,255,0.9);
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-size: 12px;
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+    z-index: 300;
+    transition: opacity 0.3s ease;
+  }
+  .hint.hidden { opacity: 0; }
+
+  /* ── chevron mini svg ── */
+  .chevron-down {
+    width: 12px; height: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER BG ══════════════════ -->
+<div class="header-bg"></div>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <!-- Marvin Logo approximate recreation -->
+    <div style="width:36px;height:36px;background:linear-gradient(135deg,#ffe0f0 0%,#e0e8ff 50%,#e0fff5 100%);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <ellipse cx="8" cy="13" rx="5" ry="6" fill="#7b6ef6" opacity="0.9"/>
+        <ellipse cx="14" cy="13" rx="5" ry="6" fill="#e5195d" opacity="0.75"/>
+        <ellipse cx="11" cy="9" rx="5" ry="5.5" fill="#f8a4c0" opacity="0.85"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-item">
+      <div class="nav-icon">🏠</div>
+      Home
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon">📁</div>
+      Projects
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">🔍</div>
+      Discover research
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📅</div>
+      Your meetings
+    </div>
+  </div>
+
+  <div style="margin:8px 16px;">
+    <div class="sidebar-meeting-card">
+      <div class="meeting-inner">
+        <div class="meeting-header">
+          <div class="meeting-icon"></div>
+          <div>
+            <div class="meeting-title">Record &amp; take notes</div>
+            <div class="meeting-sub">You are in a meeting</div>
+          </div>
+        </div>
+        <div class="meeting-event">
+          <div class="event-dot" style="background:#cabdff;"></div>
+          <div>
+            <div class="event-name">Product standup</div>
+            <div class="event-time">Started at 4:20 pm</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px; padding:0 6px 4px;">
+        <div class="meeting-event">
+          <div class="event-dot" style="background:#ffd88d;"></div>
+          <div>
+            <div class="event-name">Product standup</div>
+            <div class="event-time" style="color:#8b95c6;">Starting at 9:30 pm</div>
+          </div>
+        </div>
+        <div class="meeting-event">
+          <div class="event-dot" style="background:#b5e4ca;"></div>
+          <div>
+            <div class="event-name">Product standup</div>
+            <div class="event-time" style="color:#8b95c6;">Starting at 11:55 pm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 0 16px; margin-top: 4px;">
+    <div class="nav-item">
+      <div class="nav-icon">⋯</div>
+      More
+      <svg style="margin-left:auto;opacity:0.4" width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M4.5 3L7.5 6L4.5 9" stroke="#1C275C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Option toggle -->
+  <div class="option-toggle" id="optionToggle">
+    <div class="option-btn active" id="optBtn1" onclick="setOption(1)">Option 1</div>
+    <div class="option-btn" id="optBtn2" onclick="setOption(2)">Option 2</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar"></div>
+      <div>
+        <div class="user-name">Aditi Pawar</div>
+        <div class="user-role">Contributor</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN CONTENT ══════════════════ -->
+<div class="main">
+  <div class="top-bar">
+    <div class="breadcrumb">Projects</div>
+    <!-- right icons placeholder -->
+    <div style="display:flex;gap:16px;align-items:center;opacity:0.6;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="#505C95" stroke-width="1.5"/><path d="M13 13L17 17" stroke="#505C95" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#505C95" stroke-width="1.5"/><path d="M10 7v3l2 2" stroke="#505C95" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="1.5" fill="#505C95"/><circle cx="10" cy="10" r="1.5" fill="#505C95"/><circle cx="10" cy="14" r="1.5" fill="#505C95"/></svg>
+    </div>
+  </div>
+
+  <!-- THE SMALL SEARCH PILL (Screen 1) -->
+  <div class="search-pill-wrap" id="searchPillWrap">
+    <div class="search-pill" id="searchPill" onclick="openSearch()" tabindex="0" role="button" aria-label="Open search">
+      <div class="search-pill-left">
+        <div class="ai-star-icon">✦</div>
+        <span class="search-pill-text">Ask AI or Search anything...</span>
+      </div>
+      <div class="clock-icon">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7" stroke="#8B95C6" stroke-width="1.5"/>
+          <path d="M10 6.5V10L12.5 12" stroke="#8B95C6" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M6 10a4 4 0 0 1 4-4" stroke="#8B95C6" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT PANEL (projects table) -->
+  <div class="content-panel">
+    <div class="panel-subheader">
+      <div class="panel-left-controls">
+        <div class="show-groups-btn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" stroke="#1C275C" stroke-width="1.2"/><rect x="10" y="2" width="6" height="6" rx="1.5" stroke="#1C275C" stroke-width="1.2"/><rect x="2" y="10" width="6" height="6" rx="1.5" stroke="#1C275C" stroke-width="1.2"/><rect x="10" y="10" width="6" height="6" rx="1.5" stroke="#1C275C" stroke-width="1.2"/></svg>
+          Show project groups
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="opacity:0.5;transform:rotate(90deg)"><path d="M3 5L6 8L9 5" stroke="#1C275C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="divider-v"></div>
+        <div class="find-project-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4" stroke="#8B95C6" stroke-width="1.2"/><path d="M9.5 9.5L12 12" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Find a project
+        </div>
+      </div>
+      <div class="panel-right-controls">
+        <div class="owned-toggle">
+          Owned by me
+          <div class="toggle-pill"></div>
+        </div>
+        <div class="sort-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M6 10h8M8 14h4" stroke="#505C95" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="new-project-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+          New project
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5L6 8L9 5" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table header row -->
+    <div style="display:flex;align-items:center;padding:6px 42px;font-size:12px;color:var(--gray-500);height:40px;border-bottom:1px solid var(--gray-50);">
+      <div style="width:26px;flex-shrink:0;"><div class="cb-box"></div></div>
+      <div style="flex:1;padding-left:44px;">All projects: 112</div>
+      <div style="margin-left:auto;padding-right:14px;font-size:12px;color:var(--gray-500);">Pin on top</div>
+    </div>
+
+    <!-- Project rows -->
+    <div class="project-row">
+      <div class="row-checkbox"><div class="cb-box"></div></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Customer feedback calls</div>
+        <div class="row-meta">
+          <span>14 files</span>
+          <span class="dot">•</span>
+          <span>Last updated 1d ago</span>
+        </div>
+      </div>
+      <div class="row-tags">
+        <span class="tag-pill">Feedback</span>
+        <span class="tag-pill">Usability Test</span>
+      </div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Daniel &lt;&gt; Chirag interviews</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 3d ago</span></div>
+      </div>
+      <div class="row-tags"><span class="tag-pill">Standup</span></div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Personal folder</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 2w ago</span></div>
+      </div>
+      <div class="row-tags"><span class="tag-pill">Design calls</span></div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Marketing strategy meetings</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 1h ago</span></div>
+      </div>
+      <div class="row-tags"><span class="tag-pill">Feedback</span></div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">User experience research</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 6d ago</span></div>
+      </div>
+      <div class="row-tags"></div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Product launch plans</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 3w ago</span></div>
+      </div>
+      <div class="row-tags">
+        <span class="tag-pill">Success metrics</span>
+        <span class="tag-pill">Some more PM words here</span>
+        <span class="tag-pill">+2</span>
+      </div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+    <div class="project-row">
+      <div class="row-checkbox"></div>
+      <div class="row-icon">📁</div>
+      <div class="row-info">
+        <div class="row-name">Marketing strategy meetings</div>
+        <div class="row-meta"><span>14 files</span><span class="dot">•</span><span>Last updated 1h ago</span></div>
+      </div>
+      <div class="row-tags"></div>
+      <div class="row-actions">
+        <div class="pin-btn"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7H16L12 10.5L13.5 15.5L9 12.5L4.5 15.5L6 10.5L2 7H7L9 2Z" stroke="#505C95" stroke-width="1.2"/></svg></div>
+        <div class="more-btn"><svg width="4" height="16" viewBox="0 0 4 16"><circle cx="2" cy="3" r="1.5" fill="#505C95"/><circle cx="2" cy="8" r="1.5" fill="#505C95"/><circle cx="2" cy="13" r="1.5" fill="#505C95"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ OVERLAY ══════════════════ -->
+<div class="overlay" id="overlay" onclick="closeSearch()"></div>
+
+<!-- ══════════════════ CLOSE BUTTON (floats above modal) ══════════════════ -->
+<div class="modal-close-btn" id="closeBtn" onclick="closeSearch()">
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M2 2L10 10M10 2L2 10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<!-- ══════════════════ SEARCH MODAL (Screen 2) ══════════════════ -->
+<div class="search-modal" id="searchModal">
+
+  <!-- Gradient header zone -->
+  <div class="modal-header">
+  <!-- Input frame -->
+  <div class="modal-input-frame">
+
+    <!-- Row 1: plain text input, no button -->
+    <div class="modal-input-row">
+      <div class="modal-ai-icon">✦</div>
+      <input
+        class="modal-input"
+        id="modalInput"
+        type="text"
+        placeholder="Ask AI or Search anything..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <!-- Row 2: chips left | history + mode switcher + send right -->
+    <div class="modal-toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-chip">
+          All projects
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#1C275C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="toolbar-chip filled">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="3" y="6" width="2" height="6" rx="1" stroke="#1C275C" stroke-width="1.2"/>
+            <rect x="7" y="3" width="2" height="9" rx="1" stroke="#1C275C" stroke-width="1.2"/>
+            <rect x="11" y="5" width="2" height="7" rx="1" stroke="#1C275C" stroke-width="1.2"/>
+          </svg>
+          Filters
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#1C275C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <!-- History / clock -->
+        <div class="mode-history-btn">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="6" stroke="#505C95" stroke-width="1.3"/>
+            <path d="M9 5.5V9L11.5 11" stroke="#505C95" stroke-width="1.3" stroke-linecap="round"/>
+            <path d="M5 9a4 4 0 0 1 4-4" stroke="#505C95" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- Fast / Long mode switcher -->
+        <div class="mode-switcher">
+          <div class="mode-btn selected">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h4l2-4 2 8 2-4h2" stroke="#1C275C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Fast
+          </div>
+          <div class="mode-btn">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="5" stroke="#1C275C" stroke-width="1.2"/>
+              <circle cx="8" cy="8" r="2" fill="#1C275C" opacity="0.3"/>
+            </svg>
+            Long
+            <span class="new-badge">NEW</span>
+          </div>
+        </div>
+        <!-- Send button — far right of toolbar -->
+        <button class="modal-send-btn" onclick="handleSend()">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M10 5l6 6-6 6M4 11h12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+  </div><!-- end .modal-header -->
+
+  <!-- Extra content: gradient zone for Ask AI+query (typing) OR white zone for Recent chats (zero) -->
+  <div id="modalHeaderExtra"></div>
+
+  <!-- White results panel: search results when typing -->
+  <div class="modal-results">
+    <!-- Recent chats section -->
+    <div class="results-section">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5" stroke="#505C95" stroke-width="1.2"/>
+          <path d="M7 4V7L9 9" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M4 7a3 3 0 0 1 3-3" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Recent chats
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#8B95C6" stroke-width="1.2"/><path d="M8 4.5v3.5l2 2" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 8a3.5 3.5 0 0 1 3.5-3.5" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="result-text">
+          <div class="result-name">feedback about Marvin</div>
+        </div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#8B95C6" stroke-width="1.2"/><path d="M8 4.5v3.5l2 2" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 8a3.5 3.5 0 0 1 3.5-3.5" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="result-text">
+          <div class="result-name">find files that talk about marvin ui</div>
+        </div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#8B95C6" stroke-width="1.2"/><path d="M8 4.5v3.5l2 2" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 8a3.5 3.5 0 0 1 3.5-3.5" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="result-text">
+          <div class="result-name" style="overflow:visible;white-space:normal;font-size:13px;">Marvin Product team is exploring Marvin Lite (also known as Simple Marvin or…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-divider"></div>
+
+    <!-- Recent search section -->
+    <div class="results-section">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5" stroke="#505C95" stroke-width="1.2"/>
+          <path d="M7 4V7L9 9" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M4 7a3 3 0 0 1 3-3" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Recent search
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon" style="opacity:1;">
+          <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+            <path d="M1 7h20M1 7L5 3M1 7L5 11" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="result-text">
+          <div class="result-name">Whatson user survevys</div>
+          <div class="result-meta">Chirag Narula  •  Updated 2 months ago</div>
+        </div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="5" width="16" height="13" rx="2" stroke="#8B95C6" stroke-width="1.2"/>
+            <path d="M3 9h16" stroke="#8B95C6" stroke-width="1.2"/>
+            <path d="M7 3v4M15 3v4" stroke="#8B95C6" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="result-text">
+          <div class="result-name"><em>Wa</em>shington Marvin events</div>
+          <div class="result-meta">Chirag Narula  •  Updated 1 months ago</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- Sticky footer -->
+  <div class="modal-footer" id="modalFooter">
+    <div class="footer-link">Go to advanced search</div>
+    <div class="tab-badge" id="cmdBadge">⌘</div>
+  </div>
+</div>
+
+<!-- Hint -->
+<div class="hint" id="hint">Click the search bar to open</div>
+
+<script>
+  /* ═══════════════════════════════════════════════
+     STATE
+  ═══════════════════════════════════════════════ */
+  let isOpen       = false;
+  let pillRect     = null;
+  let resultsTimer = null;
+  let currentQuery = '';
+  let navItems     = [];   // flat list of all navigable items in current view
+  let activeIndex  = -1;  // keyboard-highlighted item
+
+  const overlay  = document.getElementById('overlay');
+  const modal       = document.getElementById('searchModal');
+  const input       = document.getElementById('modalInput');
+  const results     = modal.querySelector('.modal-results');
+  const headerExtra = document.getElementById('modalHeaderExtra');
+  const pill        = document.getElementById('searchPillWrap');
+  const closeBtn    = document.getElementById('closeBtn');
+  const hint        = document.getElementById('hint');
+  const footer      = document.getElementById('modalFooter');
+
+  setTimeout(() => hint.classList.add('hidden'), 3000);
+
+  /* ═══════════════════════════════════════════════
+     DATASET  — rich list of projects / files
+  ═══════════════════════════════════════════════ */
+  const DATASET = [
+    { name: 'Whatson user survevys',               meta: 'Chirag Narula · Updated 2 months ago', icon: 'xm'     },
+    { name: 'Washington Marvin events',            meta: 'Chirag Narula · Updated 1 month ago',  icon: 'folder', c: '#b5e4ca' },
+    { name: 'What users think about pricing',      meta: 'Aditi Pawar · Updated 5 days ago',     icon: 'folder', c: '#ffe0ec' },
+    { name: 'Customer feedback calls Q4 2024',     meta: 'Chirag Narula · Updated 2 months ago', icon: 'folder', c: '#b5e4ca' },
+    { name: 'Daniel <> Chirag interviews',         meta: 'Aditi Pawar · Updated 3 days ago',     icon: 'folder', c: '#cabdff' },
+    { name: 'Personal folder research',            meta: 'Only you · Updated 2 weeks ago',        icon: 'folder', c: '#ffd88d' },
+    { name: 'Marketing strategy Q1 2025',          meta: 'Team · Updated 1 hour ago',             icon: 'folder', c: '#b5e4ca' },
+    { name: 'User experience research rounds',     meta: 'Chirag Narula · Updated 6 days ago',   icon: 'folder', c: '#cabdff' },
+    { name: 'Product launch plan Marvin 2.0',      meta: 'Team · Updated 3 weeks ago',            icon: 'folder', c: '#ffd88d' },
+    { name: 'Marvin onboarding research',          meta: 'Team · Updated 1 week ago',             icon: 'folder', c: '#cabdff' },
+    { name: 'Competitive analysis Notion vs Marvin', meta: 'Chirag Narula · Updated 4 days ago', icon: 'folder', c: '#b5e4ca' },
+    { name: 'Discovery sessions power users',      meta: 'Aditi Pawar · Updated 1 week ago',     icon: 'folder', c: '#ffe0ec' },
+    { name: 'Quarterly business review insights',  meta: 'Team · Updated 2 weeks ago',            icon: 'folder', c: '#ffd88d' },
+    { name: 'Marvin feature prioritization',       meta: 'Chirag Narula · Updated 3 days ago',   icon: 'folder', c: '#cabdff' },
+    { name: 'Sales call recordings archive',       meta: 'Only you · Updated 1 month ago',        icon: 'folder', c: '#b5e4ca' },
+    { name: 'Research ops documentation',          meta: 'Aditi Pawar · Updated 5 days ago',     icon: 'folder', c: '#ffe0ec' },
+    { name: 'Prototype testing sessions',          meta: 'Team · Updated 2 days ago',             icon: 'folder', c: '#cabdff' },
+    { name: 'Market research 2024 trends',         meta: 'Chirag Narula · Updated 3 weeks ago',  icon: 'folder', c: '#ffd88d' },
+    { name: 'User interviews Marvin redesign',     meta: 'Team · Updated 4 days ago',             icon: 'folder', c: '#b5e4ca' },
+    { name: 'Feedback synthesis sprint 14',        meta: 'Aditi Pawar · Updated 6 days ago',     icon: 'folder', c: '#cabdff' },
+    { name: 'Accessibility audit session notes',   meta: 'Team · Updated 1 week ago',             icon: 'folder', c: '#b5e4ca' },
+    { name: 'NPS survey deep dive',                meta: 'Chirag Narula · Updated 3 days ago',   icon: 'folder', c: '#ffd88d' },
+    { name: 'Marvin mobile research',              meta: 'Aditi Pawar · Updated 2 weeks ago',    icon: 'folder', c: '#ffe0ec' },
+    { name: 'Churn analysis call recordings',      meta: 'Team · Updated 5 days ago',             icon: 'folder', c: '#cabdff' },
+  ];
+
+  /* ═══════════════════════════════════════════════
+     SVG ICON HELPERS
+  ═══════════════════════════════════════════════ */
+  const svgClock = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#505C95" stroke-width="1.2"/><path d="M7 4.5V7L8.8 8.5" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/><path d="M4 7a3 3 0 0 1 3-3" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+  const svgSearch = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4" stroke="#505C95" stroke-width="1.3"/><path d="M9.5 9.5L12 12" stroke="#505C95" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+  const svgAI = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.6663 0C11.3794 0 11.1246 0.18362 11.0339 0.455848L10.3893 2.38962L8.45552 3.03421C8.18329 3.12495 7.99967 3.37971 7.99967 3.66667C7.99967 3.95362 8.18329 4.20838 8.45552 4.29912L10.3893 4.94371L11.0339 6.87748C11.1246 7.14971 11.3794 7.33333 11.6663 7.33333C11.9533 7.33333 12.2081 7.14971 12.2988 6.87748L12.9434 4.94371L14.8772 4.29912C15.1494 4.20838 15.333 3.95362 15.333 3.66667C15.333 3.37971 15.1494 3.12495 14.8772 3.03421L12.9434 2.38962L12.2988 0.455848C12.2081 0.18362 11.9533 0 11.6663 0Z" fill="#1C275C"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.8616 10.8619C10.6013 11.1223 10.6013 11.5444 10.8616 11.8047L13.5283 14.4714C13.7886 14.7318 14.2107 14.7318 14.4711 14.4714C14.7314 14.2111 14.7314 13.7889 14.4711 13.5286L11.8044 10.8619C11.5441 10.6016 11.122 10.6016 10.8616 10.8619Z" fill="#1C275C"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.31969 2.63406C7.24644 2.27323 6.89455 2.0401 6.53372 2.11334C3.9469 2.63844 1.99968 4.9244 1.99968 7.66666C1.99968 10.7963 4.53673 13.3333 7.66635 13.3333C10.1347 13.3333 12.2328 11.7555 13.0104 9.5555C13.1331 9.20835 12.9511 8.82747 12.604 8.70477C12.2569 8.58207 11.876 8.76402 11.7533 9.11117C11.1581 10.7951 9.55206 12 7.66635 12C5.27311 12 3.33301 10.0599 3.33301 7.66666C3.33301 5.57101 4.8213 3.82147 6.79897 3.42002C7.1598 3.34678 7.39293 2.99489 7.31969 2.63406Z" fill="#1C275C"/><path fill-rule="evenodd" clip-rule="evenodd" d="M11.6673 0C11.3804 0 11.1256 0.18362 11.0349 0.455848L10.3903 2.38962L8.4565 3.03421C8.18427 3.12495 8.00065 3.37971 8.00065 3.66667C8.00065 3.95362 8.18427 4.20838 8.4565 4.29912L10.3903 4.94371L11.0349 6.87748C11.1256 7.14971 11.3804 7.33333 11.6673 7.33333C11.9543 7.33333 12.209 7.14971 12.2998 6.87748L12.9444 4.94371L14.8781 4.29912C15.1504 4.20838 15.334 3.95362 15.334 3.66667C15.334 3.37971 15.1504 3.12495 14.8781 3.03421L12.9444 2.38962L12.2998 0.455848C12.209 0.18362 11.9543 0 11.6673 0Z" fill="url(#paint0_linear_10270_8959)"/><defs><linearGradient id="paint0_linear_10270_8959" x1="15.334" y1="3.90461" x2="7.46435" y2="5.47256" gradientUnits="userSpaceOnUse"><stop stop-color="#FF819A"/><stop offset="1" stop-color="#F5337C"/></linearGradient></defs></svg>`;
+  const svgQueryIcon = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#505C95" stroke-width="1.2"/><path d="M8 5v3.5l2 2" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 8a3.5 3.5 0 0 1 3.5-3.5" stroke="#505C95" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+
+  function svgFolder(color) {
+    const bg  = color || '#dce8ff';
+    const str = bg.replace('#','');
+    // darken stroke slightly
+    return `<svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="2" y="6" width="18" height="13" rx="2.5" fill="${bg}" opacity="0.5"/>
+      <path d="M2 9h18" stroke="${bg}" stroke-width="1"/>
+      <rect x="2" y="6" width="7" height="4" rx="1.5" fill="${bg}"/>
+      <rect x="2" y="6" width="18" height="13" rx="2.5" stroke="${bg}" stroke-width="1.5" fill="none"/>
+    </svg>`;
+  }
+
+  function svgXM() {
+    return `<svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+      <text x="0" y="12" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#00A4B4">XM</text>
+    </svg>`;
+  }
+
+  function itemIcon(item) {
+    if (item.icon === 'xm') return svgXM();
+    return svgFolder(item.c);
+  }
+
+  /* ═══════════════════════════════════════════════
+     HTML HELPERS
+  ═══════════════════════════════════════════════ */
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function highlightMatch(text, query) {
+    if (!query) return esc(text);
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx < 0) return esc(text);
+    return esc(text.slice(0, idx))
+      + `<em style="font-weight:510;font-style:normal;">${esc(text.slice(idx, idx + query.length))}</em>`
+      + esc(text.slice(idx + query.length));
+  }
+
+  /* ═══════════════════════════════════════════════
+     RENDER ZERO STATE  (empty input)
+  ═══════════════════════════════════════════════ */
+  // Recent chats → gradient zone (headerExtra)
+  const ZERO_GRADIENT_HTML = `
+    <div class="results-section">
+      <div class="section-label">${svgClock} Recent chats</div>
+      <div class="result-item" data-nav="0">
+        <div class="result-icon">${svgQueryIcon}</div>
+        <div class="result-text"><div class="result-name">feedback about Marvin</div></div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>
+      <div class="result-item" data-nav="1">
+        <div class="result-icon">${svgQueryIcon}</div>
+        <div class="result-text"><div class="result-name">find files that talk about marvin ui</div></div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>
+      <div class="result-item" data-nav="2">
+        <div class="result-icon">${svgQueryIcon}</div>
+        <div class="result-text"><div class="result-name" style="white-space:normal;font-size:13px;">Marvin Product team is exploring Marvin Lite (also known as Simple Marvin or…</div></div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>
+    </div>`;
+
+  // Recent search → white zone (results)
+  const ZERO_WHITE_HTML = `
+    <div class="results-section">
+      <div class="section-label">${svgClock} Recent search</div>
+      <div class="result-item" data-nav="3">
+        <div class="result-icon">${svgXM()}</div>
+        <div class="result-text">
+          <div class="result-name">Whatson user survevys</div>
+          <div class="result-meta">Chirag Narula · Updated 2 months ago</div>
+        </div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>
+      <div class="result-item" data-nav="4">
+        <div class="result-icon">${svgFolder('#b5e4ca')}</div>
+        <div class="result-text">
+          <div class="result-name">Washington Marvin events</div>
+          <div class="result-meta">Chirag Narula · Updated 1 months ago</div>
+        </div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>
+    </div>`;
+
+  function renderZeroState() {
+    activeIndex = -1;
+    // 5 result rows (data-nav 0–4) + the footer advanced row
+    navItems = [
+      { type: 'recent', nav: 0 },
+      { type: 'recent', nav: 1 },
+      { type: 'recent', nav: 2 },
+      { type: 'recent', nav: 3 },
+      { type: 'recent', nav: 4 },
+      { type: 'advanced' },
+    ];
+    // Recent chats on gradient
+    headerExtra.classList.add('on-gradient');
+    headerExtra.innerHTML = ZERO_GRADIENT_HTML;
+    // Recent search on white
+    results.innerHTML = ZERO_WHITE_HTML;
+    results.classList.add('visible');
+    footer.style.display = '';
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  /* ═══════════════════════════════════════════════
+     RENDER TYPED STATE  (user has typed a query)
+  ═══════════════════════════════════════════════ */
+  function renderTypingState(query) {
+    const q = query.trim();
+    const filtered = DATASET
+      .filter(item => item.name.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 12);
+
+    // Build the flat navigable list
+    // index 0 = "query" row, 1 = "search-label" row, 2+ = matched files, last = advanced
+    navItems = [
+      { type: 'query', q },
+      ...(filtered.length > 0 ? [{ type: 'search-label', q }] : []),
+      ...filtered.map(item => ({ type: 'file', ...item })),
+      { type: 'advanced' },
+    ];
+
+    // Keep activeIndex in bounds; reset to 0 (query row) if out of range
+    if (activeIndex < 0 || activeIndex >= navItems.length) activeIndex = 0;
+
+    // File rows start at nav index 2 (0=query, 1=search-label)
+    const fileNavOffset = filtered.length > 0 ? 2 : 1;
+    const matchedRows = filtered.map((item, i) => `
+      <div class="result-item" data-nav="${i + fileNavOffset}" onclick="handleItemClick(${i + fileNavOffset})">
+        <div class="result-icon">${itemIcon(item)}</div>
+        <div class="result-text">
+          <div class="result-name">${highlightMatch(item.name, q)}</div>
+          <div class="result-meta">${esc(item.meta)}</div>
+        </div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>`).join('');
+
+    // Ask AI label + query row on gradient, seamless with header
+    headerExtra.classList.add('on-gradient');
+    headerExtra.innerHTML = `
+      <div class="results-section" style="padding-top:6px;padding-bottom:8px;">
+        <div class="section-label" style="padding-bottom:4px;">
+          ${svgAI}
+          Ask AI
+          <span class="ask-ai-dot">·</span>
+          <span class="ask-ai-sub">Fast thinking</span>
+        </div>
+        <div class="result-item" data-nav="0" onclick="handleItemClick(0)">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text">
+            <span style="font-size:14px;color:var(--gray-600);">"<span class="live-query">${esc(q)}</span>"</span>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+      </div>`;
+
+    // Search results live in the white results zone
+    results.innerHTML = filtered.length > 0 ? `
+        <div class="results-section" style="padding-bottom:0;">
+          <div class="result-item search-results-row" data-nav="1" onclick="handleItemClick(1)">
+            <div class="result-icon" style="border-radius:6px;background:#ECF0FB;display:flex;width:22px;height:22px;padding:4px;justify-content:center;align-items:center;flex-shrink:0;opacity:1;">${svgSearch}</div>
+            <div class="result-text">
+              <div class="result-name">Search results for <strong>"${esc(q)}"</strong></div>
+            </div>
+            <div class="enter-badge">⮐ Enter</div>
+          </div>
+        </div>
+        <div class="results-scroll">
+          <div class="results-section" style="padding-top:0;">
+            ${matchedRows}
+          </div>
+        </div>` : '';
+
+    footer.style.display = ''; // show footer when typing
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  /* ═══════════════════════════════════════════════
+     HIGHLIGHT  &  HEIGHT
+  ═══════════════════════════════════════════════ */
+  function updateHighlight() {
+    // Check both header zone and results zone for navigable items
+    modal.querySelectorAll('.result-item[data-nav]').forEach(el => {
+      el.classList.toggle('kbd-active', parseInt(el.dataset.nav) === activeIndex);
+    });
+    const advIdx = navItems.findIndex(n => n.type === 'advanced');
+    footer.classList.toggle('kbd-active', advIdx >= 0 && activeIndex === advIdx);
+  }
+
+  function animateToFitHeight() {
+    if (!isOpen) return;
+    // Measure natural height then animate to it
+    const currentH = parseFloat(modal.style.height) || 0;
+    modal.style.height = 'auto';
+    const targetH = modal.scrollHeight;
+    if (Math.abs(currentH - targetH) < 3) { modal.style.height = targetH + 'px'; return; }
+    modal.style.height = currentH + 'px';
+    modal.offsetWidth;
+    modal.classList.add('modal-height-anim');
+    modal.style.height = targetH + 'px';
+    setTimeout(() => modal.classList.remove('modal-height-anim'), 220);
+  }
+
+  function scrollActiveIntoView() {
+    const advIdx = navItems.findIndex(n => n.type === 'advanced');
+    const scrollEl = results.querySelector('.results-scroll');
+    if (activeIndex === advIdx) {
+      if (scrollEl) scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+    } else {
+      // Search both headerExtra and results zones
+      const el = modal.querySelector(`.result-item[data-nav="${activeIndex}"]`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  /* ═══════════════════════════════════════════════
+     OPEN / CLOSE  (FLIP animation)
+  ═══════════════════════════════════════════════ */
+  function setModalRect(r, radius, shadow, opacity) {
+    modal.style.left         = r.left   + 'px';
+    modal.style.top          = r.top    + 'px';
+    modal.style.width        = r.width  + 'px';
+    modal.style.height       = r.height + 'px';
+    modal.style.borderRadius = radius;
+    modal.style.boxShadow    = shadow;
+    modal.style.opacity      = opacity;
+  }
+
+  function positionCloseBtn(r) {
+    closeBtn.style.left = (r.left + r.width - 28) + 'px';
+    closeBtn.style.top  = (r.top - 38) + 'px';
+  }
+
+  function openSearch() {
+    if (isOpen) return;
+    isOpen = true;
+
+    // Reset to zero state
+    renderZeroState();
+    currentQuery = '';
+
+    pillRect = pill.getBoundingClientRect();
+
+    modal.classList.remove('animating', 'closing', 'active');
+    const frame = modal.querySelector('.modal-input-frame');
+    frame.style.transition = 'none';
+    frame.style.opacity = '1';
+
+    setModalRect(
+      { left: pillRect.left, top: pillRect.top, width: pillRect.width, height: pillRect.height },
+      '28px', 'none', '1'
+    );
+
+    pill.style.opacity = '0';
+    pill.style.pointerEvents = 'none';
+    overlay.classList.add('active');
+
+    modal.offsetWidth; // reflow
+
+    // Measure natural (zero-state) height
+    const FINAL_W = 638;
+    const FINAL_L = (window.innerWidth - FINAL_W) / 2;
+    const FINAL_T = 212;
+
+    // Temporarily layout at final width to measure height
+    modal.style.width = FINAL_W + 'px';
+    modal.style.height = 'auto';
+    const FINAL_H = modal.scrollHeight;
+    modal.style.height = pillRect.height + 'px';
+    modal.style.width = pillRect.width + 'px';
+    modal.offsetWidth;
+
+    positionCloseBtn({ left: FINAL_L, top: FINAL_T, width: FINAL_W, height: FINAL_H });
+
+    modal.classList.add('animating', 'active');
+    setModalRect(
+      { left: FINAL_L, top: FINAL_T, width: FINAL_W, height: FINAL_H },
+      '20px',
+      '0 8px 48px rgba(0,11,41,0.20), 0 1px 4px rgba(0,11,41,0.08)',
+      '1'
+    );
+
+    closeBtn.classList.add('visible');
+    // Don't auto-show white results panel in zero state — only shown when typing
+    setTimeout(() => input.focus(), 160);
+  }
+
+  function closeSearch() {
+    if (!isOpen) return;
+    isOpen = false;
+
+    input.blur();
+    clearTimeout(resultsTimer);
+
+    // Reset input + re-render zero state so next open is clean
+    input.value = '';
+    currentQuery = '';
+    headerExtra.innerHTML = '';
+
+    results.classList.remove('visible');
+    closeBtn.classList.remove('visible');
+    modal.querySelector('.modal-input-frame').style.transition = 'opacity 0.1s ease';
+    modal.querySelector('.modal-input-frame').style.opacity = '0';
+
+    modal.classList.remove('animating');
+    modal.classList.add('closing');
+    modal.classList.remove('active');
+    overlay.classList.remove('active');
+
+    modal.offsetWidth;
+    setModalRect(
+      { left: pillRect.left, top: pillRect.top, width: pillRect.width, height: pillRect.height },
+      '24px', 'none', '1'
+    );
+
+    setTimeout(() => {
+      pill.style.transition    = 'opacity 0.12s ease';
+      pill.style.opacity       = '1';
+      pill.style.pointerEvents = 'auto';
+      modal.style.transition   = 'opacity 0.12s ease';
+      modal.style.opacity      = '0';
+
+      setTimeout(() => {
+        modal.classList.remove('closing');
+        modal.style.transition = 'none';
+        modal.style.opacity    = '0';
+        modal.offsetWidth;
+        modal.style.cssText    = '';
+        pill.style.transition  = '';
+      }, 130);
+    }, 270);
+  }
+
+  /* ═══════════════════════════════════════════════
+     INPUT  →  live search
+  ═══════════════════════════════════════════════ */
+  input.addEventListener('input', () => {
+    const q = input.value;
+    currentQuery = q;
+    activeIndex = 0; // reset to first row on every keystroke
+
+    if (q.trim() === '') {
+      results.classList.remove('visible');
+      renderZeroState();
+    } else {
+      results.classList.add('visible');
+      renderTypingState(q.trim());
+    }
+  });
+
+  /* ═══════════════════════════════════════════════
+     KEYBOARD NAVIGATION
+  ═══════════════════════════════════════════════ */
+  document.addEventListener('keydown', (e) => {
+    // Global toggles
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      isOpen ? closeSearch() : openSearch();
+      return;
+    }
+    if (e.key === 'Escape' && isOpen) { closeSearch(); return; }
+    if (!isOpen) return;
+
+    if (e.metaKey && e.key === 'ArrowDown') {
+      // ⌘↓ — jump straight to "Go to advanced search"
+      e.preventDefault();
+      if (navItems.length > 0) {
+        activeIndex = navItems.length - 1;
+        updateHighlight();
+        scrollActiveIntoView();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (navItems.length > 0) {
+        activeIndex = Math.min(activeIndex + 1, navItems.length - 1);
+        updateHighlight();
+        scrollActiveIntoView();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (navItems.length > 0) {
+        activeIndex = Math.max(activeIndex - 1, 0);
+        updateHighlight();
+        scrollActiveIntoView();
+      }
+    } else if (e.key === 'Enter') {
+      if (navItems[activeIndex]) {
+        handleItemClick(activeIndex);
+      } else if (!currentQuery.trim()) {
+        handleSend();
+      }
+    }
+  });
+
+  document.getElementById('searchPill').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSearch(); }
+  });
+
+  // Mouse hover sets activeIndex so keyboard nav picks up from where cursor leaves
+  modal.addEventListener('mouseover', (e) => {
+    const item = e.target.closest('.result-item[data-nav]');
+    if (!item) return;
+    const nav = parseInt(item.dataset.nav);
+    if (!isNaN(nav) && nav !== activeIndex) {
+      activeIndex = nav;
+      updateHighlight();
+    }
+  });
+
+  // Footer hover
+  footer.addEventListener('mouseover', () => {
+    const advIdx = navItems.findIndex(n => n.type === 'advanced');
+    if (advIdx >= 0 && activeIndex !== advIdx) {
+      activeIndex = advIdx;
+      updateHighlight();
+    }
+  });
+
+  /* ═══════════════════════════════════════════════
+     ITEM SELECTION
+  ═══════════════════════════════════════════════ */
+  function handleItemClick(index) {
+    const item = navItems[index];
+    if (!item) return;
+    closeSearch(); // all types (query, file, advanced) close for now
+  }
+
+  function handleSend() {
+    if (input.value.trim()) closeSearch();
+  }
+
+  function jumpToAdvanced(e) {
+    if (navItems.length > 0) {
+      activeIndex = navItems.length - 1;
+      updateHighlight();
+      scrollActiveIntoView();
+    }
+  }
+
+  // Footer: ⌘ badge highlights "Go to advanced search", clicking elsewhere closes
+  document.getElementById('cmdBadge').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // prevent input blur
+    e.stopPropagation();
+    jumpToAdvanced(e);
+  });
+  document.getElementById('modalFooter').addEventListener('click', (e) => {
+    if (e.target.id === 'cmdBadge') return; // badge handled above
+    closeSearch();
+  });
+
+  /* ═══════════════════════════════════════════════
+     OPTION TOGGLE
+  ═══════════════════════════════════════════════ */
+  let currentOption = 1;
+  const modalHeader = modal.querySelector('.modal-header');
+
+  function setOption(n) {
+    currentOption = n;
+    document.getElementById('optBtn1').classList.toggle('active', n === 1);
+    document.getElementById('optBtn2').classList.toggle('active', n === 2);
+    if (isOpen) {
+      if (currentQuery.trim() === '') renderZeroState();
+      else renderTypingState(currentQuery.trim());
+    }
+  }
+
+  /* ─── Option 2: all-white, Ask AI + Search rows, Suggestions ─── */
+
+  function renderZeroStateV2() {
+    activeIndex = -1;
+    // nav 0–4 = recent items, last = advanced
+    navItems = [
+      { type: 'recent', nav: 0 },
+      { type: 'recent', nav: 1 },
+      { type: 'recent', nav: 2 },
+      { type: 'recent', nav: 3 },
+      { type: 'recent', nav: 4 },
+      { type: 'advanced' },
+    ];
+
+    modalHeader.style.background = '#ffffff';
+    headerExtra.classList.remove('on-gradient');
+    headerExtra.innerHTML = '';
+
+    results.innerHTML = `
+      <div class="results-section">
+        <div class="section-label">Suggestions</div>
+        <div class="result-item" data-nav="0">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name">feedback about Marvin</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="1">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name">find files that talk about marvin ui</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="2">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name" style="white-space:normal;font-size:13px;">Marvin Product team is exploring Marvin Lite (also known as Simple Marvin or…</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="3">
+          <div class="result-icon">${svgXM()}</div>
+          <div class="result-text">
+            <div class="result-name">Whatson user survevys</div>
+            <div class="result-meta">Chirag Narula · Updated 2 months ago</div>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="4">
+          <div class="result-icon">${svgFolder('#b5e4ca')}</div>
+          <div class="result-text">
+            <div class="result-name">Washington Marvin events</div>
+            <div class="result-meta">Chirag Narula · Updated 1 months ago</div>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+      </div>`;
+
+    results.classList.add('visible');
+    footer.style.display = '';
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  function renderTypingStateV2(query) {
+    const q = query.trim();
+    const filtered = DATASET
+      .filter(item => item.name.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 12);
+
+    // nav 0 = Ask AI, 1 = Search, 2+ = suggestions, last = advanced
+    navItems = [
+      { type: 'query', q },
+      { type: 'search', q },
+      ...filtered.map(item => ({ type: 'file', ...item })),
+      { type: 'advanced' },
+    ];
+    if (activeIndex < 0 || activeIndex >= navItems.length) activeIndex = 0;
+
+    const suggestionRows = filtered.map((item, i) => `
+      <div class="result-item" data-nav="${i + 2}" onclick="handleItemClick(${i + 2})">
+        <div class="result-icon">${itemIcon(item)}</div>
+        <div class="result-text">
+          <div class="result-name">${highlightMatch(item.name, q)}</div>
+          <div class="result-meta">${esc(item.meta)}</div>
+        </div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>`).join('');
+
+    modalHeader.style.background = '#ffffff';
+    headerExtra.classList.remove('on-gradient');
+    headerExtra.innerHTML = '';
+
+    results.innerHTML = `
+      <div class="results-section" style="padding-bottom:4px;">
+        <div class="result-item" data-nav="0" onclick="handleItemClick(0)">
+          <div class="result-icon">${svgAI}</div>
+          <div class="result-text">
+            <span style="font-size:14px;color:var(--gray-600);">
+              <span class="v2-action-label" style="font-weight:510;color:var(--gray-500);">Ask AI</span>
+              <span style="color:var(--gray-300);margin:0 4px;">·</span>
+              "<span class="live-query">${esc(q)}</span>"
+            </span>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="1" onclick="handleItemClick(1)">
+          <div class="result-icon" style="border-radius:6px;background:#ECF0FB;display:flex;width:22px;height:22px;padding:4px;justify-content:center;align-items:center;flex-shrink:0;opacity:1;">${svgSearch}</div>
+          <div class="result-text">
+            <span style="font-size:14px;color:var(--gray-600);">
+              <span class="v2-action-label" style="font-weight:510;color:var(--gray-500);">Search</span>
+              <span style="color:var(--gray-300);margin:0 4px;">·</span>
+              "<span class="live-query">${esc(q)}</span>"
+            </span>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+      </div>
+      ${filtered.length > 0 ? `
+      <div class="results-section" style="border-top:1px solid rgba(0,11,41,0.06);padding-top:8px;">
+        <div class="section-label">Suggestions</div>
+        <div class="results-scroll">
+          ${suggestionRows}
+        </div>
+      </div>` : ''}`;
+
+    results.classList.add('visible');
+    footer.style.display = '';
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  /* ─── Dispatch render based on active option ─── */
+  const _baseRenderZero = renderZeroState;
+  renderZeroState = function() {
+    if (currentOption === 2) { renderZeroStateV2(); return; }
+    modalHeader.style.background = '';
+    _baseRenderZero();
+  };
+  const _baseRenderTyping = renderTypingState;
+  renderTypingState = function(q) {
+    if (currentOption === 2) { renderTypingStateV2(q); return; }
+    modalHeader.style.background = '';
+    _baseRenderTyping(q);
+  };
+</script>
+</body>
+</html>
