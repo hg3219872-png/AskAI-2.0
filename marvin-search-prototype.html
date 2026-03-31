@@ -650,6 +650,11 @@
   }
   .result-item:hover { background: var(--gray-25); }
   .result-item:hover .v2-action-label { color: #1C275C; }
+  /* Option 2 Ask AI row — special gradient hover only */
+  .v2-askai-row:hover {
+    background: linear-gradient(275deg, rgba(255,236,241,0.50) 0%, rgba(235,242,255,0.50) 50.5%, rgba(242,255,250,0.50) 100%), #F4F7FF !important;
+    border-radius: 8px;
+  }
   /* keyboard-navigation active highlight */
   .result-item.kbd-active {
     background: rgba(173, 187, 227, 0.40) !important;
@@ -862,6 +867,7 @@
   <div class="option-toggle" id="optionToggle">
     <div class="option-btn active" id="optBtn1" onclick="setOption(1)">Option 1</div>
     <div class="option-btn" id="optBtn2" onclick="setOption(2)">Option 2</div>
+    <div class="option-btn" id="optBtn3" onclick="setOption(3)">Option 3</div>
   </div>
 
   <div class="sidebar-footer">
@@ -1757,6 +1763,7 @@
     currentOption = n;
     document.getElementById('optBtn1').classList.toggle('active', n === 1);
     document.getElementById('optBtn2').classList.toggle('active', n === 2);
+    document.getElementById('optBtn3').classList.toggle('active', n === 3);
     if (isOpen) {
       if (currentQuery.trim() === '') renderZeroState();
       else renderTypingState(currentQuery.trim());
@@ -1855,7 +1862,138 @@
 
     results.innerHTML = `
       <div class="results-section" style="padding-bottom:4px;">
-        <div class="result-item" data-nav="0" onclick="handleItemClick(0)">
+        <div class="result-item v2-askai-row" data-nav="0" onclick="handleItemClick(0)">
+          <div class="result-icon">${svgAI}</div>
+          <div class="result-text">
+            <span style="font-size:14px;color:var(--gray-600);">
+              <span class="v2-action-label" style="font-weight:510;color:var(--gray-500);">Ask AI</span>
+              <span style="color:var(--gray-300);margin:0 4px;">·</span>
+              "<span class="live-query">${esc(q)}</span>"
+            </span>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="1" onclick="handleItemClick(1)">
+          <div class="result-icon" style="border-radius:6px;background:#ECF0FB;display:flex;width:22px;height:22px;padding:4px;justify-content:center;align-items:center;flex-shrink:0;opacity:1;">${svgSearch}</div>
+          <div class="result-text">
+            <span style="font-size:14px;color:var(--gray-600);">
+              <span class="v2-action-label" style="font-weight:510;color:var(--gray-500);">Search</span>
+              <span style="color:var(--gray-300);margin:0 4px;">·</span>
+              "<span class="live-query">${esc(q)}</span>"
+            </span>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+      </div>
+      ${filtered.length > 0 ? `
+      <div class="results-section" style="border-top:1px solid rgba(0,11,41,0.06);padding-top:8px;">
+        <div class="section-label">${svgClock} Suggestions</div>
+        <div class="results-scroll">
+          ${suggestionRows}
+        </div>
+      </div>` : ''}`;
+
+    results.classList.add('visible');
+    footer.style.display = '';
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  /* ─── Option 3: independent copy of V2 — modify freely without affecting Option 2 ─── */
+
+  function renderZeroStateV3() {
+    activeIndex = -1;
+    navItems = [
+      { type: 'recent', nav: 0 },
+      { type: 'recent', nav: 1 },
+      { type: 'recent', nav: 2 },
+      { type: 'recent', nav: 3 },
+      { type: 'recent', nav: 4 },
+      { type: 'advanced' },
+    ];
+
+    modalHeader.style.background = '#ffffff';
+    headerExtra.classList.remove('on-gradient');
+    headerExtra.innerHTML = '';
+
+    results.innerHTML = `
+      <div class="results-section">
+        <div class="section-label">Suggestions</div>
+        <div class="result-item" data-nav="0">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name">feedback about Marvin</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="1">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name">find files that talk about marvin ui</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="2">
+          <div class="result-icon">${svgQueryIcon}</div>
+          <div class="result-text"><div class="result-name" style="white-space:normal;font-size:13px;">Marvin Product team is exploring Marvin Lite (also known as Simple Marvin or…</div></div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="3">
+          <div class="result-icon">${svgXM()}</div>
+          <div class="result-text">
+            <div class="result-name">Whatson user survevys</div>
+            <div class="result-meta">Chirag Narula · Updated 2 months ago</div>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+        <div class="result-item" data-nav="4">
+          <div class="result-icon">${svgFolder('#b5e4ca')}</div>
+          <div class="result-text">
+            <div class="result-name">Washington Marvin events</div>
+            <div class="result-meta">Chirag Narula · Updated 1 months ago</div>
+          </div>
+          <div class="enter-badge">⮐ Enter</div>
+        </div>
+      </div>`;
+
+    results.classList.add('visible');
+    footer.style.display = '';
+    footer.style.background = '';
+    updateHighlight();
+    animateToFitHeight();
+  }
+
+  function renderTypingStateV3(query) {
+    const q = query.trim();
+    const filtered = DATASET
+      .filter(item => item.name.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 12);
+
+    navItems = [
+      { type: 'query', q },
+      { type: 'search', q },
+      ...filtered.map(item => ({ type: 'file', ...item })),
+      { type: 'advanced' },
+    ];
+
+    // Option 3 smart default: Search highlighted until 4th word, then Ask AI
+    const wordCount = q.split(/\s+/).filter(w => w.length > 0).length;
+    activeIndex = wordCount >= 4 ? 0 : 1;
+
+    const suggestionRows = filtered.map((item, i) => `
+      <div class="result-item" data-nav="${i + 2}" onclick="handleItemClick(${i + 2})">
+        <div class="result-icon">${itemIcon(item)}</div>
+        <div class="result-text">
+          <div class="result-name">${highlightMatch(item.name, q)}</div>
+          <div class="result-meta">${esc(item.meta)}</div>
+        </div>
+        <div class="enter-badge">⮐ Enter</div>
+      </div>`).join('');
+
+    modalHeader.style.background = '#ffffff';
+    headerExtra.classList.remove('on-gradient');
+    headerExtra.innerHTML = '';
+
+    results.innerHTML = `
+      <div class="results-section" style="padding-bottom:4px;">
+        <div class="result-item v2-askai-row" data-nav="0" onclick="handleItemClick(0)">
           <div class="result-icon">${svgAI}</div>
           <div class="result-text">
             <span style="font-size:14px;color:var(--gray-600);">
@@ -1897,12 +2035,14 @@
   const _baseRenderZero = renderZeroState;
   renderZeroState = function() {
     if (currentOption === 2) { renderZeroStateV2(); return; }
+    if (currentOption === 3) { renderZeroStateV3(); return; }
     modalHeader.style.background = '';
     _baseRenderZero();
   };
   const _baseRenderTyping = renderTypingState;
   renderTypingState = function(q) {
     if (currentOption === 2) { renderTypingStateV2(q); return; }
+    if (currentOption === 3) { renderTypingStateV3(q); return; }
     modalHeader.style.background = '';
     _baseRenderTyping(q);
   };
